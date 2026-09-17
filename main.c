@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define PERM {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-#define PERM_LEN 10
+#define PERM {1, 2, 3, 4}
+#define PERM_LEN 4
 
 bool Permutation(int* p, size_t n)
 {
@@ -52,20 +52,47 @@ bool Permutation(int* p, size_t n)
 int main()
 {
     int p[PERM_LEN] = PERM;
-    size_t count = 0;
     
+    int Mat[4][4] = {
+
+        {0, 10, 5, 17},
+        {6, 0, 1, 1},
+        {9, 10, 0, 4},
+        {16, 3, 7, 0}
+
+    };  
+
+    size_t min_sum = Mat[0][1] + Mat[1][2] + Mat[2][3] + Mat[3][0];
+    size_t min_cycle[PERM_LEN + 1] = {1, 2, 3, 4, 1};
+
     while (Permutation(p, PERM_LEN))
     {
-        for (size_t i = 0; i < PERM_LEN; i++)
-        {
-            printf("%d", p[i]);
-        }
+        size_t sum = 0;
 
-        printf("\n");
-        count++;
+        for (size_t i = 0; i < PERM_LEN - 1; i++)
+        {
+            sum += Mat[p[i] - 1][p[i + 1] - 1];
+        }
+        sum += Mat[p[PERM_LEN - 1] - 1][p[0] - 1];
+
+        if (sum < min_sum)
+        {
+            min_sum = sum;
+
+            for (size_t i = 0; i < PERM_LEN; i++)
+            {
+                min_cycle[i] = p[i];
+            }
+            min_cycle[PERM_LEN] = min_cycle[0];
+        }
     }
 
-    printf("\n%d", count);
+    printf("path cost:  %d\n", min_sum);
+    for (size_t i = 0; i < PERM_LEN; i++)
+    {
+        printf("%d-", min_cycle[i]);
+    }
+    printf("%d\n", min_cycle[PERM_LEN]);
 
     return 0;
 }
