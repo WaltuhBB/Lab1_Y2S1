@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define PERM {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-#define PERM_LEN 11
+#define PERM {2, 1, 3, 4}
+#define PERM_LEN 4
 
 bool Permutation(int* p, size_t n)
 {
@@ -48,6 +48,58 @@ bool Permutation(int* p, size_t n)
     }
 
     return res;
+}
+
+int HeuristicAlg(unsigned int** Mat, int* cycle)
+{
+    if (!Mat || !cycle)
+    {
+        return -1;
+    }
+    for (size_t i = 0; i < PERM_LEN; i++)
+    {
+        if (!Mat[i])
+        {
+            return -1;
+        }
+    }
+
+    int next_node;
+    int curr_node = 0;
+
+    bool visits[PERM_LEN] = {false};
+
+    int sum = 0;
+
+    do
+    {
+        next_node = -1;
+        int cost = 0;
+
+        for (size_t j = 0; j < PERM_LEN; j++)
+        {
+            if (Mat[curr_node][j] && !visits[j] && ((!cost) || (Mat[curr_node][j] < cost)))
+            {
+                next_node = j;
+                cost = Mat[curr_node][j];
+
+                for (size_t k = 0; k < 10000000; k++);
+
+                printf("next_node = %d  cost = %d\n", next_node+1, cost);
+            }
+        }
+
+        printf("\n");
+
+        visits[next_node] = true;
+        sum += cost;
+        curr_node = next_node;
+
+        printf("curr_node = %d  sum = %d\n\n", curr_node+1, sum);
+
+    } while (next_node != -1);
+
+    return sum;
 }
 
 unsigned int** createMatrix_r(size_t size)
@@ -120,19 +172,23 @@ int main()
     
     int p[PERM_LEN] = PERM;
     
-    // unsigned int Mat[PERM_LEN][PERM_LEN] = {
-
-    //     {0, 10, 5, 17},
-    //     {6, 0, 1, 1},
-    //     {9, 10, 0, 4},
-    //     {16, 3, 7, 0}
-
-    // };
-    
     unsigned int **Mat = createMatrix_r(PERM_LEN);
 
     if (Mat)
     {    
+        Mat[0][1] = 10;
+        Mat[0][2] = 5;
+        Mat[0][3] = 17;
+        Mat[1][0] = 6;
+        Mat[1][2] = 1;
+        Mat[1][3] = 1; 
+        Mat[2][0] = 9;
+        Mat[2][1] = 10;
+        Mat[2][3] = 4;
+        Mat[3][0] = 16;
+        Mat[3][1] = 3;
+        Mat[3][2] = 7;
+
         for (size_t i = 0; i < PERM_LEN; i++)
         {
             for (size_t j = 0; j < PERM_LEN; j++)
@@ -142,6 +198,9 @@ int main()
             printf("\n");
         }
         printf("\n");
+
+        int cycle[PERM_LEN + 1];
+        printf("heuristic res: %d\n\n", HeuristicAlg(Mat, cycle));
 
         unsigned int min_sum = 0;
 
@@ -159,7 +218,7 @@ int main()
         }
         min_cycle[PERM_LEN] = min_cycle[0];
 
-        while (Permutation(p, PERM_LEN))
+        while (Permutation(p, PERM_LEN) && p[0] == 1)
         {
             unsigned int sum = 0;
 
@@ -168,6 +227,13 @@ int main()
                 sum += Mat[p[i] - 1][p[i + 1] - 1];
             }
             sum += Mat[p[PERM_LEN - 1] - 1][p[0] - 1];
+
+            for (size_t i = 0; i < PERM_LEN; i++)
+            {
+                printf("%d ", p[i]);
+            }
+            printf("\n");
+            printf("%d\n", sum);
 
             if (sum < min_sum)
             {
