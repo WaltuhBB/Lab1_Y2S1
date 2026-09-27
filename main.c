@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define PERM {2, 1, 3, 4}
-#define PERM_LEN 4
+#define PERM {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
+#define PERM_LEN 13
 
 bool Permutation(int* p, size_t n)
 {
@@ -50,13 +50,13 @@ bool Permutation(int* p, size_t n)
     return res;
 }
 
-int HeuristicAlg(unsigned int** Mat, int* cycle)
+int HeuristicAlg(unsigned int** Mat, int* cycle, size_t node_amount)
 {
-    if (!Mat || !cycle)
+    if (!Mat || !cycle || !node_amount)
     {
         return -1;
     }
-    for (size_t i = 0; i < PERM_LEN; i++)
+    for (size_t i = 0; i < node_amount; i++)
     {
         if (!Mat[i])
         {
@@ -64,10 +64,19 @@ int HeuristicAlg(unsigned int** Mat, int* cycle)
         }
     }
 
+    unsigned char *visits = (unsigned char*)calloc((node_amount - 1) / 8 + 1, sizeof(unsigned char));
+
+    if (!visits)
+    {
+        return -2;
+    }
+
+    visits[0] |= 128;
+
+    size_t k = 0;
+
     int next_node;
     int curr_node = 0;
-
-    bool visits[PERM_LEN] = {false};
 
     int sum = 0;
 
@@ -76,28 +85,31 @@ int HeuristicAlg(unsigned int** Mat, int* cycle)
         next_node = -1;
         int cost = 0;
 
-        for (size_t j = 0; j < PERM_LEN; j++)
+        for (size_t j = 0; j < node_amount; j++)
         {
-            if (Mat[curr_node][j] && !visits[j] && ((!cost) || (Mat[curr_node][j] < cost)))
+            if (Mat[curr_node][j] && !(visits[j / 8] & (128 >> j % 8)) && ((!cost) || (Mat[curr_node][j] < cost)))
             {
                 next_node = j;
                 cost = Mat[curr_node][j];
-
-                for (size_t k = 0; k < 10000000; k++);
-
-                printf("next_node = %d  cost = %d\n", next_node+1, cost);
             }
         }
 
-        printf("\n");
+        cycle[k] = curr_node + 1;
+        k++;
 
-        visits[next_node] = true;
-        sum += cost;
-        curr_node = next_node;
-
-        printf("curr_node = %d  sum = %d\n\n", curr_node+1, sum);
+        if (next_node != -1)
+        {    
+            visits[next_node / 8] |= 128 >> next_node % 8;
+            sum += cost;
+            curr_node = next_node;
+        }
 
     } while (next_node != -1);
+
+    sum += Mat[curr_node][0];
+    cycle[node_amount] = 1;
+
+    free(visits);
 
     return sum;
 }
@@ -175,19 +187,19 @@ int main()
     unsigned int **Mat = createMatrix_r(PERM_LEN);
 
     if (Mat)
-    {    
-        Mat[0][1] = 10;
-        Mat[0][2] = 5;
-        Mat[0][3] = 17;
-        Mat[1][0] = 6;
-        Mat[1][2] = 1;
-        Mat[1][3] = 1; 
-        Mat[2][0] = 9;
-        Mat[2][1] = 10;
-        Mat[2][3] = 4;
-        Mat[3][0] = 16;
-        Mat[3][1] = 3;
-        Mat[3][2] = 7;
+    {   
+        // Mat[0][1] = 10;
+        // Mat[0][2] = 5;
+        // Mat[0][3] = 17;
+        // Mat[1][0] = 6;
+        // Mat[1][2] = 1;
+        // Mat[1][3] = 1; 
+        // Mat[2][0] = 9;
+        // Mat[2][1] = 10;
+        // Mat[2][3] = 4;
+        // Mat[3][0] = 16;
+        // Mat[3][1] = 3;
+        // Mat[3][2] = 7;
 
         for (size_t i = 0; i < PERM_LEN; i++)
         {
@@ -199,8 +211,17 @@ int main()
         }
         printf("\n");
 
+        //эвристика
+
         int cycle[PERM_LEN + 1];
-        printf("heuristic res: %d\n\n", HeuristicAlg(Mat, cycle));
+        printf("Heuristic result: %d\n", HeuristicAlg(Mat, cycle, PERM_LEN));
+        for (size_t i = 0; i < PERM_LEN; i++)
+        {
+            printf("%d-", cycle[i]);
+        }
+        printf("%d\n\n", cycle[PERM_LEN]);
+
+        //перебор
 
         unsigned int min_sum = 0;
 
@@ -227,13 +248,6 @@ int main()
                 sum += Mat[p[i] - 1][p[i + 1] - 1];
             }
             sum += Mat[p[PERM_LEN - 1] - 1][p[0] - 1];
-
-            for (size_t i = 0; i < PERM_LEN; i++)
-            {
-                printf("%d ", p[i]);
-            }
-            printf("\n");
-            printf("%d\n", sum);
 
             if (sum < min_sum)
             {
